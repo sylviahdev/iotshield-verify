@@ -111,7 +111,7 @@ interface Archetype {
   vendors: readonly string[]
   /** Hostname stem; index is appended. */
   stem: string
-  protocol: Device['protocol']
+  protocol: NetworkEvent['protocol']
   ports: readonly number[]
   firmwarePrefix: string
 }

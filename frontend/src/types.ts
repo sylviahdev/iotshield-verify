@@ -39,6 +39,9 @@ export type VerificationStatus = 'Verified' | 'Failed' | 'Warning'
    Assets
    ========================================================================== */
 
+/** Transport a device speaks. Shared with NetworkEvent so the two agree. */
+export type Protocol = 'TCP' | 'UDP' | 'MQTT' | 'CoAP' | 'HTTPS'
+
 export type DeviceCategory =
   | 'Smart Camera'
   | 'Gateway Router'
@@ -68,7 +71,7 @@ export interface Device {
   location: string
   /** Composite 0-100 posture score: patch level, exposure, and behaviour. */
   health: number
-  protocol: string
+  protocol: Protocol
   openPorts: number[]
   uptimeHours: number
   /** Populated when the device is attributed to a malware family. */
@@ -100,7 +103,7 @@ export interface NetworkEvent {
   sourceIp: string
   destIp: string
   destPort: number
-  protocol: 'TCP' | 'UDP' | 'MQTT' | 'CoAP' | 'HTTPS'
+  protocol: Protocol
   bytes: number
   verdict: EventVerdict
   severity: Severity
