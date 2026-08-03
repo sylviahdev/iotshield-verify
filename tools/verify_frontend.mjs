@@ -268,7 +268,7 @@ check('Landing shows both calls to action',
   landing.includes('Launch Dashboard') && landing.includes('View System Architecture'))
 
 for (const heading of ['Research Overview', 'Core Modules', 'Research Workflow',
-                       'Technologies Used', 'Why Formal Verification', 'Research Project']) {
+                       'Platform Capabilities', 'Why Formal Verification', 'Research Project']) {
   check(`Landing section present: ${heading}`, new RegExp(heading, 'i').test(landing))
 }
 check('Landing has no console errors', errors.length === 0, errors[0] ?? '')
@@ -292,6 +292,24 @@ await page.goto(`${BASE}/#/`, { waitUntil: 'networkidle' })
 await page.waitForTimeout(1200)
 const anchorExists = await page.evaluate(() => !!document.querySelector('#architecture'))
 check('View System Architecture has a target', anchorExists, '#architecture missing')
+
+// Every same-page nav anchor must resolve to a real section. HashRouter route
+// links also start with "#" (e.g. "#/dashboard") but are not element ids, so
+// only plain "#name" fragments are considered.
+const danglingAnchors = await page.evaluate(() =>
+  [...document.querySelectorAll('nav a[href^="#"]')]
+    .map((a) => a.getAttribute('href'))
+    .filter((h) => h && /^#[A-Za-z][\w-]*$/.test(h) && h !== '#top')
+    .filter((h) => !document.querySelector(h)),
+)
+check('All landing nav anchors resolve', danglingAnchors.length === 0,
+  `dangling: ${danglingAnchors.join(', ')}`)
+
+// The six capability statements must all be present.
+for (const cap of ['IoT Malware Detection', 'Formal Verification', 'Threat Analysis',
+                   'Resilience Assessment', 'Interactive Dashboard', 'Automated Reports']) {
+  check(`Capability listed: ${cap}`, landing.includes(cap))
+}
 
 // Landing must not render the console chrome.
 const hasRail = await page.evaluate(

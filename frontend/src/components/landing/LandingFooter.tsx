@@ -36,7 +36,7 @@ const PAGE_LINKS = [
   { href: '#overview', label: 'Research Overview' },
   { href: '#modules', label: 'Core Modules' },
   { href: '#architecture', label: 'System Architecture' },
-  { href: '#technology', label: 'Technologies' },
+  { href: '#capabilities', label: 'Capabilities' },
   { href: '#why', label: 'Why Formal Verification' },
 ]
 

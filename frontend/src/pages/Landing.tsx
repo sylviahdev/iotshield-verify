@@ -11,13 +11,13 @@
  */
 
 import { useEffect } from 'react'
+import { Capabilities } from '@/components/landing/Capabilities'
 import { CoreModules } from '@/components/landing/CoreModules'
 import { Hero } from '@/components/landing/Hero'
 import { LandingFooter } from '@/components/landing/LandingFooter'
 import { LandingNav } from '@/components/landing/LandingNav'
 import { ResearchOverview } from '@/components/landing/ResearchOverview'
 import { ResearchWorkflow } from '@/components/landing/ResearchWorkflow'
-import { TechnologyStack } from '@/components/landing/TechnologyStack'
 import { WhyFormalVerification } from '@/components/landing/WhyFormalVerification'
 import { PRODUCT_NAME, RESEARCH_TITLE } from '@/lib/research'
 
@@ -39,7 +39,7 @@ export default function Landing() {
         <ResearchOverview />
         <CoreModules />
         <ResearchWorkflow />
-        <TechnologyStack />
+        <Capabilities />
         <WhyFormalVerification />
       </main>
 

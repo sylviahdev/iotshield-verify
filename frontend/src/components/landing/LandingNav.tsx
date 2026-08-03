@@ -20,7 +20,7 @@ const LINKS = [
   { href: '#overview', label: 'Overview' },
   { href: '#modules', label: 'Modules' },
   { href: '#architecture', label: 'Architecture' },
-  { href: '#technology', label: 'Technology' },
+  { href: '#capabilities', label: 'Capabilities' },
   { href: '#why', label: 'Why Verification' },
 ]
 
