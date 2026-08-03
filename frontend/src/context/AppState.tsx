@@ -294,7 +294,13 @@ export function AppStateProvider({ children }: { children: ReactNode }) {
     })
   }, [devicesRes.data, simulation])
 
-  /** Simulation alerts are prepended so they lead the triage queue. */
+  /**
+   * Simulation alerts are prepended so they lead the triage queue.
+   *
+   * The base list is de-duplicated against them: when the backend is live it
+   * prepends its own copy of the run's alerts to `/alerts`, so a naive
+   * concatenation would show each one twice and collide on React keys.
+   */
   const alerts = useMemo<Alert[]>(() => {
     const { result, emitted } = simulation
     if (!result || result.alerts.length === 0) return alertsRes.data
@@ -302,7 +308,8 @@ export function AppStateProvider({ children }: { children: ReactNode }) {
     const detectionReached = emitted.some((s) => s.phase === 'Detection')
     if (!detectionReached) return alertsRes.data
 
-    return [...result.alerts, ...alertsRes.data]
+    const injected = new Set(result.alerts.map((a) => a.id))
+    return [...result.alerts, ...alertsRes.data.filter((a) => !injected.has(a.id))]
   }, [alertsRes.data, simulation])
 
   const verificationOverride = useMemo<VerificationProperty[] | null>(() => {

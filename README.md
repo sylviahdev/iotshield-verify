@@ -69,6 +69,15 @@ counterexample.
 ```bash
 cd backend
 pip install -r requirements.txt
+python3 run.py
+```
+
+`run.py` is a thin launcher around uvicorn. It accepts `--host`, `--port`,
+`--no-reload` (recommended when presenting, so a stray file save cannot restart
+the API mid-demo) and `--reset` (wipe and regenerate the database). The
+equivalent direct invocation is:
+
+```bash
 uvicorn app.main:app --reload
 ```
 
@@ -120,9 +129,9 @@ npm run verify:backend      # 86 checks
 npm run verify:parity
 
 # 3. Frontend — all 12 routes in headless Chromium, simulation propagation,
-#    Petri-net controls, assistant, and responsive overflow at 390/820px
+#    Petri-net controls, assistant, paint checks, responsive overflow
 cd frontend && npm run build && npm run preview &   # serves :4173
-npm run verify:frontend     # 44 checks
+npm run verify:frontend     # 56 checks
 ```
 
 The frontend check needs a headless Chromium:
@@ -167,6 +176,7 @@ iotshield-verify/
 │   │   ├── schemas.py        Pydantic models mirroring types.ts
 │   │   ├── simulation.py     Server-side scenario scripts
 │   │   └── main.py           The API
+│   ├── run.py                Convenience launcher (wraps uvicorn)
 │   └── README.md
 └── tools/                    Verification scripts
 ```

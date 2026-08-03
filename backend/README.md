@@ -4,7 +4,20 @@ FastAPI · Pydantic 2 · SQLite (stdlib `sqlite3`) · ReportLab
 
 ```bash
 pip install -r requirements.txt
-uvicorn app.main:app --reload      # http://localhost:8000
+python3 run.py                     # http://localhost:8000
+```
+
+| Flag | Effect |
+|---|---|
+| `--host HOST` | Interface to bind (default `127.0.0.1`) |
+| `--port PORT` | Port to bind (default `8000`) |
+| `--no-reload` | Disable auto-reload — recommended when presenting |
+| `--reset` | Wipe and regenerate the database before starting |
+
+`run.py` only wraps uvicorn; the direct equivalent is:
+
+```bash
+uvicorn app.main:app --reload
 ```
 
 Interactive API documentation: **http://localhost:8000/docs**

@@ -32,6 +32,7 @@ import {
   X,
 } from 'lucide-react'
 import { useDataContext } from '@/api/DataContext'
+import { PRODUCT_NAME, RESEARCH_TITLE } from '@/lib/research'
 import { useAlertFeed } from '@/context/AppState'
 import { cn, timeAgo } from '@/lib/utils'
 import { SeverityBadge, SourceBadge } from './ui'
@@ -59,7 +60,7 @@ export const NAV_GROUPS: NavGroup[] = [
     title: 'Overview',
     items: [
       {
-        to: '/',
+        to: '/dashboard',
         label: 'Executive Dashboard',
         icon: LayoutDashboard,
         hint: 'Fleet posture, threat trend and security score',
@@ -170,7 +171,7 @@ function BrandMark({ collapsed }: { collapsed: boolean }) {
     <Link
       to="/"
       className="flex items-center gap-3 rounded-xl px-1 py-1 transition hover:opacity-90"
-      aria-label="IoTShield Verify — home"
+      aria-label="IoTShield Verify — return to the landing page"
     >
       <span className="relative grid size-9 shrink-0 place-items-center rounded-xl border border-brand-400/30 bg-gradient-to-br from-brand-500/25 to-ice-500/15 shadow-glow">
         <ShieldCheck className="size-[18px] text-brand-200" aria-hidden />
@@ -214,7 +215,6 @@ function SidebarContent({
                 <li key={item.to}>
                   <NavLink
                     to={item.to}
-                    end={item.to === '/'}
                     onClick={onNavigate}
                     title={collapsed ? item.label : undefined}
                     className={({ isActive }) =>
@@ -703,8 +703,7 @@ export function Shell({ children }: { children: ReactNode }) {
 
         <footer className="no-print border-t border-white/[0.05] px-6 py-4">
           <p className="mx-auto max-w-[1600px] text-[11px] leading-relaxed text-ink-700">
-            IoTShield Verify · A Formal Verification Approach to IoT Malware
-            Analysis, Detection, and Resilience — MSc research demonstration.
+            {PRODUCT_NAME} · {RESEARCH_TITLE} — MSc research demonstration.
             Synthetic data throughout; figures are illustrative and are not
             experimental results.
           </p>

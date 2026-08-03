@@ -18,7 +18,7 @@ const BASE = process.argv[2] ?? 'http://127.0.0.1:4173'
 const SHOTS = process.env.SHOT_DIR ?? null
 
 const ROUTES = [
-  { hash: '/', name: 'Executive Dashboard', expect: 'Executive Dashboard' },
+  { hash: '/dashboard', name: 'Executive Dashboard', expect: 'Executive Dashboard' },
   { hash: '/analytics', name: 'Analytics', expect: 'Analytics' },
   { hash: '/devices', name: 'IoT Devices', expect: 'IoT Device Inventory' },
   { hash: '/network', name: 'Network Activity', expect: 'Network Activity' },
@@ -240,13 +240,75 @@ const overflow = await page.evaluate(
 check('No horizontal page overflow at 390px', overflow <= 1, `${overflow}px of overflow`)
 if (SHOTS) await page.screenshot({ path: `${SHOTS}/mobile-devices.png`, fullPage: false })
 
-await page.goto(`${BASE}/#/`, { waitUntil: 'networkidle' })
+await page.goto(`${BASE}/#/dashboard`, { waitUntil: 'networkidle' })
 await page.waitForTimeout(900)
 const overflowHome = await page.evaluate(
   () => document.documentElement.scrollWidth - document.documentElement.clientWidth,
 )
 check('No horizontal page overflow on the dashboard at 390px', overflowHome <= 1,
   `${overflowHome}px of overflow`)
+
+// ---- Landing page ---------------------------------------------------------
+await page.setViewportSize({ width: 1500, height: 950 })
+errors.length = 0
+await page.goto(`${BASE}/#/`, { waitUntil: 'networkidle' })
+await page.waitForTimeout(1400)
+
+const landing = await page.innerText('body')
+
+// The official research title must appear verbatim.
+const TITLE =
+  'A Formal Verification Approach to IoT Malware Analysis, Detection, and Resilience'
+check('Landing shows the official research title verbatim', landing.includes(TITLE),
+  'exact title string not found in the rendered page')
+check('Landing shows the subtitle',
+  landing.includes('An interactive web-based platform for IoT malware analysis'))
+check('Landing shows both calls to action',
+  landing.includes('Launch Dashboard') && landing.includes('View System Architecture'))
+
+for (const heading of ['Research Overview', 'Core Modules', 'Research Workflow',
+                       'Technologies Used', 'Why Formal Verification', 'Research Project']) {
+  check(`Landing section present: ${heading}`, new RegExp(heading, 'i').test(landing))
+}
+check('Landing has no console errors', errors.length === 0, errors[0] ?? '')
+if (SHOTS) await page.screenshot({ path: `${SHOTS}/landing.png` })
+
+const landingPaint = await paintedBytes()
+check('Landing actually paints', landingPaint >= MIN_PAINTED_BYTES,
+  `content region compressed to ${landingPaint} bytes`)
+
+// "Launch Dashboard" must actually reach the console.
+await page.getByRole('link', { name: /Launch Dashboard/i }).first().click()
+await page.waitForTimeout(1600)
+check('Launch Dashboard reaches the console',
+  /#\/dashboard|#\/detection/.test(page.url()) &&
+  (await page.innerText('body')).includes('Executive Dashboard') ||
+  (await page.innerText('body')).includes('Threat Detection'),
+  `landed on ${page.url()}`)
+
+// The architecture anchor must exist for the second CTA.
+await page.goto(`${BASE}/#/`, { waitUntil: 'networkidle' })
+await page.waitForTimeout(1200)
+const anchorExists = await page.evaluate(() => !!document.querySelector('#architecture'))
+check('View System Architecture has a target', anchorExists, '#architecture missing')
+
+// Landing must not render the console chrome.
+const hasRail = await page.evaluate(
+  () => !!document.querySelector('aside nav[aria-label="Modules"]'),
+)
+check('Landing renders without console chrome', !hasRail)
+
+// Landing responsiveness.
+await page.setViewportSize({ width: 390, height: 844 })
+await page.goto(`${BASE}/#/`, { waitUntil: 'networkidle' })
+await page.waitForTimeout(1200)
+const landingOverflow = await page.evaluate(
+  () => document.documentElement.scrollWidth - document.documentElement.clientWidth,
+)
+check('No horizontal overflow on the landing page at 390px', landingOverflow <= 1,
+  `${landingOverflow}px of overflow`)
+if (SHOTS) await page.screenshot({ path: `${SHOTS}/landing-mobile.png` })
+await page.setViewportSize({ width: 820, height: 1180 })
 if (SHOTS) await page.screenshot({ path: `${SHOTS}/mobile-dashboard.png`, fullPage: false })
 
 // Tablet.
