@@ -207,7 +207,10 @@ function RecentActivity() {
         }
       />
 
-      <ul className="mt-4 flex-1 space-y-1">
+      {/* The feed scrolls rather than setting the row height: the grid stretches
+          both cards to the tallest, and an unbounded list would leave a void
+          beside the security score. */}
+      <ul className="mt-4 min-h-0 flex-1 space-y-1 overflow-y-auto pr-1">
         {recent.map((alert, i) => (
           <motion.li
             key={alert.id}

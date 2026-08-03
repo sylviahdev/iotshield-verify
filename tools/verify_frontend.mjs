@@ -76,6 +76,22 @@ if (SHOTS) mkdirSync(SHOTS, { recursive: true })
 
 console.log(`\n\x1b[1mRoutes (${BASE})\x1b[0m`)
 
+/**
+ * A page can be perfectly laid out in the DOM and still paint nothing — an
+ * oversized `backdrop-filter` layer failing to rasterise did exactly that here
+ * once. `innerText` cannot see it, so the content region is screenshotted and
+ * its compressed size used as a proxy for visual complexity: an empty region is
+ * a near-flat fill and compresses to almost nothing.
+ */
+const MIN_PAINTED_BYTES = 12_000
+
+async function paintedBytes() {
+  const shot = await page.screenshot({
+    clip: { x: 280, y: 70, width: 1200, height: 860 },
+  })
+  return shot.length
+}
+
 for (const route of ROUTES) {
   errors.length = 0
 
@@ -89,6 +105,10 @@ for (const route of ROUTES) {
   check(`${route.name} renders`, body.includes(route.expect) && !boundary,
     boundary ? 'error boundary tripped' : 'heading not found')
   check(`${route.name} has no console errors`, errors.length === 0, errors[0] ?? '')
+
+  const painted = await paintedBytes()
+  check(`${route.name} actually paints`, painted >= MIN_PAINTED_BYTES,
+    `content region compressed to ${painted} bytes — page is probably blank`)
 
   if (SHOTS) {
     const slug = route.hash === '/' ? 'dashboard' : route.hash.replace(/\//g, '')

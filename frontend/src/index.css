@@ -98,17 +98,34 @@
 }
 
 @layer components {
-  /* The signature panel treatment used by every card in the product. */
+  /* The signature panel treatment used by every card in the product.
+
+     Deliberately NO backdrop-filter. A page card sits on the navy plane rather
+     than floating over content, so a blur buys nothing visually — and a card
+     can be very tall (the device table runs past 2500px), where a full-size
+     backdrop layer is both expensive to rasterise every frame and liable to
+     fail outright on software renderers, leaving the panel blank. The frosted
+     look comes from the translucent gradient instead. Use `.glass-float` for
+     elements that genuinely overlay other content. */
   .glass {
-    @apply border border-white/[0.07] bg-white/[0.03] shadow-glass backdrop-blur-xl;
+    @apply border border-white/[0.07] shadow-glass;
+    background: linear-gradient(
+      160deg,
+      rgb(255 255 255 / 0.045),
+      rgb(255 255 255 / 0.022)
+    );
   }
 
+  /* Floating chrome — dropdowns, tooltips, drawers. These are small and
+     viewport-bounded, and they really do sit over content, so the blur both
+     reads correctly and stays cheap. */
+  .glass-float,
   .glass-strong {
     @apply border border-white/[0.09] shadow-raise backdrop-blur-2xl;
     background: linear-gradient(
       160deg,
-      rgb(19 35 64 / 0.82),
-      rgb(15 26 47 / 0.74)
+      rgb(19 35 64 / 0.88),
+      rgb(15 26 47 / 0.82)
     );
   }
 
