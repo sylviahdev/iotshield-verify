@@ -162,7 +162,8 @@ await page.goto(`${BASE}/#/petri-net`, { waitUntil: 'networkidle' })
 await page.waitForTimeout(1500)
 const petri = await page.innerText('body')
 check('Petri net rendered its places', petri.includes('Malware Execution') && petri.includes('Idle'))
-check('Petri net shows the colour legend', petri.includes('Token colours'))
+// `innerText` reflects text-transform, and the legend label is uppercased in CSS.
+check('Petri net shows the colour legend', /token colours/i.test(petri))
 if (SHOTS) await page.screenshot({ path: `${SHOTS}/petri-net.png` })
 
 // ==========================================================================
