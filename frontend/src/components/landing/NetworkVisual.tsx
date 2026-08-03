@@ -240,7 +240,10 @@ export function NetworkVisual() {
             )
           })()}
 
-        {/* ---- Radar sweep -------------------------------------------------- */}
+        {/* ---- Radar sweep --------------------------------------------------
+            Scaled rather than animated on the `r` attribute: Framer Motion can
+            emit `r="undefined"` mid-transition on SVG geometry attributes, and
+            a transform is cheaper to composite than a geometry change. */}
         {!reduced && (
           <motion.circle
             cx={CORE.x}
@@ -249,8 +252,10 @@ export function NetworkVisual() {
             fill="none"
             stroke="#22D3EE"
             strokeWidth="1.2"
-            animate={{ r: [40, 196], opacity: [0.5, 0] }}
+            initial={{ scale: 1, opacity: 0.5 }}
+            animate={{ scale: [1, 4.9], opacity: [0.5, 0] }}
             transition={{ duration: 4.2, repeat: Infinity, ease: 'easeOut' }}
+            style={{ transformOrigin: `${CORE.x}px ${CORE.y}px` }}
           />
         )}
 

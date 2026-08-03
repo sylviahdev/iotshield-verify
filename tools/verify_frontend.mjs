@@ -217,7 +217,8 @@ check('No errors driving the net', errors.length === 0, errors[0] ?? '')
 console.log(`\n\x1b[1mAssistant and responsiveness\x1b[0m`)
 
 errors.length = 0
-await page.goto(`${BASE}/#/`, { waitUntil: 'networkidle' })
+// The assistant lives in the console, not on the landing page.
+await page.goto(`${BASE}/#/dashboard`, { waitUntil: 'networkidle' })
 await page.waitForTimeout(700)
 await page.getByRole('button', { name: /Open AI security assistant/i }).first().click()
 await page.waitForTimeout(600)

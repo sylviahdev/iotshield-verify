@@ -8,7 +8,7 @@
  */
 
 import { Link } from 'react-router-dom'
-import { ArrowRight, FileText, GitBranch, ShieldCheck, Sparkles } from 'lucide-react'
+import { ArrowRight, FileText, Radar, ShieldCheck, Sparkles } from 'lucide-react'
 import {
   PRODUCT_NAME,
   PRODUCT_TAGLINE,
@@ -76,12 +76,15 @@ export function LandingFooter() {
             </p>
 
             <div className="mt-9 flex flex-col items-stretch gap-3 sm:flex-row sm:items-center sm:justify-center">
+              {/* Each label names where it actually goes. The primary action
+                  here is the scenario runner, not the dashboard — the section
+                  copy is about launching a run. */}
               <Link
                 to="/detection"
                 className="group inline-flex items-center justify-center gap-2 rounded-xl border border-brand-400/40 bg-gradient-to-b from-brand-500 to-brand-600 px-6 py-3 text-[15px] font-medium text-white shadow-glow transition hover:from-brand-400 hover:to-brand-500"
               >
-                <ShieldCheck className="size-[18px]" aria-hidden />
-                Launch Dashboard
+                <Radar className="size-[18px]" aria-hidden />
+                Run a scenario
                 <ArrowRight
                   className="size-4 transition-transform duration-200 group-hover:translate-x-0.5"
                   aria-hidden
@@ -89,11 +92,11 @@ export function LandingFooter() {
               </Link>
 
               <Link
-                to="/petri-net"
+                to="/dashboard"
                 className="inline-flex items-center justify-center gap-2 rounded-xl border border-white/12 bg-white/[0.04] px-6 py-3 text-[15px] font-medium text-ink-100 transition hover:border-brand-400/40 hover:bg-brand-500/10 hover:text-brand-200"
               >
-                <GitBranch className="size-[18px]" aria-hidden />
-                Open the Petri Net model
+                <ShieldCheck className="size-[18px]" aria-hidden />
+                Launch Dashboard
               </Link>
             </div>
           </div>

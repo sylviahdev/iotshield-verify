@@ -124,7 +124,7 @@ interface Tech {
 
 const STACK: Tech[] = [
   { key: 'react', name: 'React', role: 'Component runtime', version: '19', colour: '#61DAFB' },
-  { key: 'typescript', name: 'TypeScript', role: 'Type-safe domain model', version: '5.9', colour: '#3178C6' },
+  { key: 'typescript', name: 'TypeScript', role: 'Type-safe domain model', version: '6.0', colour: '#3178C6' },
   { key: 'vite', name: 'Vite', role: 'Build tooling and HMR', version: '8', colour: '#A78BFA' },
   { key: 'fastapi', name: 'FastAPI', role: 'REST service layer', version: '0.136', colour: '#05998B' },
   { key: 'python', name: 'Python', role: 'Analysis and reporting', version: '3.10+', colour: '#FFD343' },
