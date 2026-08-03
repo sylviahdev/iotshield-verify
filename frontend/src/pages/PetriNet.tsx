@@ -260,20 +260,39 @@ function NetCanvas({
     return s
   }, [net.lastFirings])
 
+  /**
+   * Nodes are created with fully-formed data rather than an empty object:
+   * React Flow paints them once before the marking effect below runs, so a
+   * partially-populated `data` would fault on that first render.
+   */
   const initialNodes = useMemo<Node[]>(
     () => [
       ...PLACES.map((p) => ({
         id: p.id,
         type: 'place',
         position: { x: p.x, y: p.y },
-        data: {} as PlaceNodeData,
+        data: {
+          label: p.label,
+          marking: [],
+          total: 0,
+          hazard: p.hazard,
+          safe: p.safe,
+          selected: false,
+          active: false,
+        } satisfies PlaceNodeData as PlaceNodeData,
         draggable: false,
       })),
       ...TRANSITIONS.map((t) => ({
         id: t.id,
         type: 'transition',
         position: { x: t.x, y: t.y },
-        data: {} as TransitionNodeData,
+        data: {
+          label: t.label,
+          guard: t.guard,
+          enabled: false,
+          firing: false,
+          selected: false,
+        } satisfies TransitionNodeData as TransitionNodeData,
         draggable: false,
       })),
     ],
@@ -351,7 +370,7 @@ function NetCanvas({
     setEdges((current) =>
       current.map((edge) => {
         const isActive = active.has(edge.id)
-        const colour = isActive
+        const colour: TokenColour | null = isActive
           ? (net.lastFirings.find(
               (f) =>
                 `${f.from}->${f.transition}` === edge.id ||
@@ -359,17 +378,19 @@ function NetCanvas({
             )?.colourAfter ?? 'benign')
           : null
 
+        const hex = colour ? COLOURS[colour].hex : '#1C2C48'
+
         return {
           ...edge,
           animated: isActive,
           style: {
-            stroke: colour ? COLOURS[colour].hex : '#1C2C48',
+            stroke: hex,
             strokeWidth: isActive ? 2.2 : 1.4,
-            filter: isActive ? `drop-shadow(0 0 5px ${COLOURS[colour!].hex})` : undefined,
+            filter: isActive ? `drop-shadow(0 0 5px ${hex})` : undefined,
           },
           markerEnd: {
             type: MarkerType.ArrowClosed,
-            color: colour ? COLOURS[colour].hex : '#1C2C48',
+            color: hex,
             width: 14,
             height: 14,
           },

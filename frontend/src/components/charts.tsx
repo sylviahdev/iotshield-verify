@@ -69,9 +69,12 @@ export function ChartCard({
   footnote,
 }: ChartCardProps) {
   return (
-    <GlassCard className={cn('flex flex-col p-5', className)} lit>
+    // `min-w-0` matters: a grid item defaults to `min-width: auto`, so the
+    // chart's intrinsic width would otherwise widen its track and push the
+    // whole page into horizontal overflow on narrow viewports.
+    <GlassCard className={cn('flex min-w-0 flex-col p-5', className)} lit>
       <SectionTitle title={title} subtitle={subtitle} icon={icon} action={action} />
-      <div className="mt-5 w-full" style={{ height }}>
+      <div className="mt-5 w-full min-w-0" style={{ height }}>
         <ResponsiveContainer width="100%" height="100%">
           {children as never}
         </ResponsiveContainer>

@@ -37,7 +37,10 @@ const HANDLE_STYLE = { opacity: 0, width: 1, height: 1 } as const
 
 function PlaceNodeImpl({ data }: NodeProps) {
   const d = data as PlaceNodeData
-  const dominant = d.marking[0]?.[0]
+  // Defensive: React Flow can paint a node before the marking effect runs.
+  const marking = d.marking ?? []
+  const total = d.total ?? 0
+  const dominant = marking[0]?.[0]
   const ring = dominant ? COLOURS[dominant].hex : '#1C2C48'
 
   return (
@@ -59,25 +62,25 @@ function PlaceNodeImpl({ data }: NodeProps) {
         )}
         style={{
           background:
-            d.total > 0
+            total > 0
               ? `radial-gradient(circle at 50% 40%, ${ring}33, rgba(12,21,38,0.94))`
               : 'rgba(12,21,38,0.9)',
-          borderColor: d.total > 0 ? ring : undefined,
-          boxShadow: d.total > 0 ? `0 0 20px -4px ${ring}88` : undefined,
+          borderColor: total > 0 ? ring : undefined,
+          boxShadow: total > 0 ? `0 0 20px -4px ${ring}88` : undefined,
         }}
       >
         {/* Hazard / safe glyph sits behind the tokens as a state cue. */}
-        {d.total === 0 && d.hazard && (
+        {total === 0 && d.hazard && (
           <AlertTriangle className="size-4 text-bad/50" aria-hidden />
         )}
-        {d.total === 0 && d.safe && (
+        {total === 0 && d.safe && (
           <ShieldCheck className="size-4 text-ok/45" aria-hidden />
         )}
 
         {/* Tokens. Up to five dots are drawn individually; beyond that the
             count badge below carries the number. */}
         <div className="flex max-w-[46px] flex-wrap items-center justify-center gap-[3px]">
-          {d.marking.flatMap(([colour, count]) =>
+          {marking.flatMap(([colour, count]) =>
             Array.from({ length: Math.min(count, 5) }, (_, i) => (
               <motion.span
                 key={`${colour}-${i}`}
@@ -95,9 +98,9 @@ function PlaceNodeImpl({ data }: NodeProps) {
           )}
         </div>
 
-        {d.total > 5 && (
+        {total > 5 && (
           <span className="tabular absolute -right-1.5 -top-1.5 grid min-w-[20px] place-items-center rounded-full border border-navy-900 bg-navy-700 px-1 text-[10px] font-semibold text-ink-100">
-            {d.total}
+            {total}
           </span>
         )}
       </motion.div>
@@ -112,9 +115,9 @@ function PlaceNodeImpl({ data }: NodeProps) {
       </p>
 
       {/* Marking in CPN notation, e.g. 2`benign ++ 1`malicious */}
-      {d.total > 0 && (
+      {total > 0 && (
         <p className="mt-0.5 max-w-[124px] text-center font-mono text-[9.5px] leading-tight text-ink-500">
-          {d.marking.map(([c, n]) => `${n}\`${c}`).join(' ++ ')}
+          {marking.map(([c, n]) => `${n}\`${c}`).join(' ++ ')}
         </p>
       )}
     </div>
