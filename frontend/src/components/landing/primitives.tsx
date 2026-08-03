@@ -147,6 +147,15 @@ export interface Stat {
   label: string
   /** Optional clarifier shown beneath the label. */
   detail?: string
+  /**
+   * Icon rendered beside the label. Lucide rather than emoji, so the glyph
+   * inherits the accent colour, stays crisp at any size, and renders
+   * identically on every platform — emoji do none of those things and would be
+   * the only non-Lucide iconography in the product.
+   */
+  icon?: ReactNode
+  /** Accent applied to the icon. Defaults to the brand blue. */
+  accent?: string
 }
 
 /** A row of headline figures. Used under the hero and the research overview. */
@@ -166,9 +175,23 @@ export function StatStrip({
     >
       {stats.map((stat, i) => (
         <Reveal key={stat.label} delay={i * 0.06}>
-          <div className="h-full bg-navy-900/85 px-4 py-5 text-center sm:px-5">
+          <div className="group h-full bg-navy-900/85 px-4 py-5 text-center transition-colors duration-300 hover:bg-navy-850/85 sm:px-5">
             <dt className="sr-only">{stat.label}</dt>
             <dd>
+              {stat.icon && (
+                <span
+                  className="mx-auto mb-2.5 grid size-9 place-items-center rounded-xl border transition duration-300"
+                  style={{
+                    color: stat.accent ?? '#60A5FA',
+                    borderColor: `${stat.accent ?? '#60A5FA'}3D`,
+                    background: `${stat.accent ?? '#60A5FA'}12`,
+                  }}
+                  aria-hidden
+                >
+                  {stat.icon}
+                </span>
+              )}
+
               <span className="tabular block bg-gradient-to-b from-ink-100 to-brand-300 bg-clip-text text-2xl font-semibold text-transparent sm:text-[28px]">
                 {stat.value}
               </span>

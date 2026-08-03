@@ -12,19 +12,60 @@
  * this page.
  */
 
+import { useEffect, useState } from 'react'
 import { Link } from 'react-router-dom'
-import { motion } from 'framer-motion'
-import { ArrowRight, Network, ShieldCheck, Sparkles } from 'lucide-react'
+import { motion, useReducedMotion } from 'framer-motion'
+import {
+  ArrowRight,
+  Bug,
+  CheckCircle2,
+  ChevronDown,
+  GitBranch,
+  Network,
+  RadioTower,
+  ShieldAlert,
+  ShieldCheck,
+  Sparkles,
+} from 'lucide-react'
 import { RESEARCH_SUBTITLE, RESEARCH_TITLE } from '@/lib/research'
 import { NetworkVisual } from './NetworkVisual'
 import { Reveal, StatStrip, type Stat } from './primitives'
 
-/** Figures describing the demonstration environment, not measured results. */
+/**
+ * Figures describing the demonstration environment, not measured results.
+ *
+ * Icons are Lucide rather than emoji so they inherit the accent colour, stay
+ * crisp at any size, and render identically across platforms.
+ */
 const HERO_STATS: Stat[] = [
-  { value: '40', label: 'IoT endpoints', detail: 'Ten device classes' },
-  { value: '10', label: 'Malware families', detail: 'With IOCs and mitigations' },
-  { value: '6', label: 'Formal properties', detail: 'CTL and LTL' },
-  { value: '5', label: 'Attack scenarios', detail: 'Scripted end to end' },
+  {
+    value: '40',
+    label: 'IoT endpoints',
+    detail: 'Ten device classes',
+    icon: <RadioTower className="size-[18px]" />,
+    accent: '#22D3EE',
+  },
+  {
+    value: '10',
+    label: 'Malware families',
+    detail: 'With IOCs and mitigations',
+    icon: <Bug className="size-[18px]" />,
+    accent: '#F04438',
+  },
+  {
+    value: '6',
+    label: 'Formal properties',
+    detail: 'CTL and LTL',
+    icon: <CheckCircle2 className="size-[18px]" />,
+    accent: '#22C55E',
+  },
+  {
+    value: '5',
+    label: 'Attack scenarios',
+    detail: 'Scripted end to end',
+    icon: <ShieldAlert className="size-[18px]" />,
+    accent: '#A78BFA',
+  },
 ]
 
 export function Hero() {
@@ -84,11 +125,28 @@ export function Hero() {
             </div>
           </Reveal>
 
+          {/* Positioning line, then the honesty note. Two weights rather than
+              one block, so the framing reads first and the caveat still lands. */}
           <Reveal delay={0.32}>
-            <p className="mt-6 text-[12px] leading-relaxed text-ink-700">
-              Demonstration environment — all devices, telemetry and verification
-              results are synthetic. No real hardware or live network traffic is
-              involved.
+            <p className="mt-7 flex flex-wrap items-center justify-center gap-x-2.5 gap-y-1 text-[12.5px] font-medium text-ink-300 lg:justify-start">
+              <span className="inline-flex items-center gap-1.5">
+                <Sparkles className="size-3.5 text-brand-400" aria-hidden />
+                Research Demonstration Platform
+              </span>
+              <span className="text-ink-700" aria-hidden>
+                •
+              </span>
+              <span className="inline-flex items-center gap-1.5">
+                <GitBranch className="size-3.5 text-violet-400" aria-hidden />
+                Powered by Formal Verification &amp; Coloured Petri Nets
+              </span>
+            </p>
+          </Reveal>
+
+          <Reveal delay={0.38}>
+            <p className="mt-2.5 text-[11.5px] leading-relaxed text-ink-700">
+              All devices, telemetry and verification results are synthetic. No
+              real hardware or live network traffic is involved.
             </p>
           </Reveal>
         </div>
@@ -108,7 +166,71 @@ export function Hero() {
       <div className="mx-auto mt-16 w-full max-w-[1200px] sm:mt-20">
         <StatStrip stats={HERO_STATS} />
       </div>
+
+      <ScrollCue />
     </section>
+  )
+}
+
+/* ==========================================================================
+   Scroll cue
+   ========================================================================== */
+
+/**
+ * Signals that content continues below the fold.
+ *
+ * It is a real anchor, not a decoration — clicking it jumps to the first
+ * section, so the cue is useful rather than merely suggestive. It fades out
+ * once the viewer has actually scrolled, because an indicator that keeps
+ * bouncing after you have taken its advice is just noise.
+ */
+function ScrollCue() {
+  const reduced = useReducedMotion()
+  const [hidden, setHidden] = useState(false)
+
+  useEffect(() => {
+    const onScroll = () => setHidden(window.scrollY > 90)
+    onScroll()
+
+    // Child effects run before parent ones, so this component reads scrollY
+    // before <Landing> has reset it to the top. Arriving from a scrolled
+    // console route would otherwise start the cue hidden. Re-check on the next
+    // frame, once that reset has happened.
+    const frame = requestAnimationFrame(onScroll)
+
+    window.addEventListener('scroll', onScroll, { passive: true })
+    return () => {
+      cancelAnimationFrame(frame)
+      window.removeEventListener('scroll', onScroll)
+    }
+  }, [])
+
+  return (
+    <motion.div
+      initial={{ opacity: 0 }}
+      animate={{ opacity: hidden ? 0 : 1 }}
+      transition={{ duration: 0.5, delay: hidden ? 0 : 1.1 }}
+      // Once faded, stop intercepting clicks over the content beneath it.
+      style={{ pointerEvents: hidden ? 'none' : 'auto' }}
+      className="mt-12 flex justify-center sm:mt-14"
+    >
+      <a
+        href="#overview"
+        className="group inline-flex flex-col items-center gap-2 rounded-xl px-4 py-2 text-ink-500 transition hover:text-brand-300"
+      >
+        <span className="text-[11px] font-medium uppercase tracking-[0.16em]">
+          Scroll to explore
+        </span>
+
+        <motion.span
+          className="grid size-8 place-items-center rounded-full border border-white/10 bg-white/[0.03] transition group-hover:border-brand-400/40 group-hover:bg-brand-500/10"
+          animate={reduced ? undefined : { y: [0, 5, 0] }}
+          transition={{ duration: 1.9, repeat: Infinity, ease: 'easeInOut' }}
+        >
+          <ChevronDown className="size-4" aria-hidden />
+        </motion.span>
+      </a>
+    </motion.div>
   )
 }
 

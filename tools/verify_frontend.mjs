@@ -271,6 +271,32 @@ for (const heading of ['Research Overview', 'Core Modules', 'Research Workflow',
                        'Platform Capabilities', 'Why Formal Verification', 'Research Project']) {
   check(`Landing section present: ${heading}`, new RegExp(heading, 'i').test(landing))
 }
+check('Hero shows the research positioning line',
+  landing.includes('Research Demonstration Platform') &&
+  /Powered by Formal Verification/.test(landing))
+check('Hero shows a scroll cue', /scroll to explore/i.test(landing))
+
+// The cue must be visible at the top and fade once the viewer has scrolled,
+// so it guides rather than nags.
+await page.evaluate(() => window.scrollTo(0, 0))
+await page.waitForTimeout(2200)
+const cueAtTop = await page.evaluate(() => {
+  const a = [...document.querySelectorAll('a')]
+    .find((x) => /scroll to explore/i.test(x.textContent || ''))
+  return a ? Number(getComputedStyle(a.parentElement).opacity) : -1
+})
+await page.evaluate(() => window.scrollTo(0, 600))
+await page.waitForTimeout(900)
+const cueScrolled = await page.evaluate(() => {
+  const a = [...document.querySelectorAll('a')]
+    .find((x) => /scroll to explore/i.test(x.textContent || ''))
+  return a ? Number(getComputedStyle(a.parentElement).opacity) : -1
+})
+await page.evaluate(() => window.scrollTo(0, 0))
+await page.waitForTimeout(600)
+check('Scroll cue is visible at the top and fades after scrolling',
+  cueAtTop > 0.9 && cueScrolled < 0.1, `top=${cueAtTop} scrolled=${cueScrolled}`)
+
 check('Landing has no console errors', errors.length === 0, errors[0] ?? '')
 if (SHOTS) await page.screenshot({ path: `${SHOTS}/landing.png` })
 

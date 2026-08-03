@@ -10,9 +10,8 @@
  */
 
 import { useEffect, useState } from 'react'
-import { Link } from 'react-router-dom'
 import { AnimatePresence, motion } from 'framer-motion'
-import { ArrowRight, Menu, ShieldCheck, X } from 'lucide-react'
+import { Menu, ShieldCheck, X } from 'lucide-react'
 import { PRODUCT_NAME, PRODUCT_TAGLINE } from '@/lib/research'
 import { cn } from '@/lib/utils'
 
@@ -86,24 +85,17 @@ export function LandingNav() {
           ))}
         </ul>
 
-        {/* ---- Actions ------------------------------------------------------- */}
-        <div className="flex items-center gap-2">
-          <Link
-            to="/dashboard"
-            className="hidden items-center gap-2 rounded-xl border border-brand-400/40 bg-gradient-to-b from-brand-500 to-brand-600 px-4 py-2 text-[13px] font-medium text-white shadow-glow transition hover:from-brand-400 hover:to-brand-500 sm:inline-flex"
-          >
-            Launch Dashboard
-            <ArrowRight className="size-3.5" aria-hidden />
-          </Link>
-
-          <button
-            onClick={() => setOpen(true)}
-            aria-label="Open menu"
-            className="grid size-9 place-items-center rounded-xl border border-white/10 bg-white/[0.04] text-ink-300 transition hover:text-ink-100 md:hidden"
-          >
-            <Menu className="size-[17px]" aria-hidden />
-          </button>
-        </div>
+        {/* ---- Mobile trigger ------------------------------------------------
+            No call to action lives in the bar; the hero owns that. With the
+            desktop link list right-aligned by `justify-between`, the bar stays
+            balanced on both breakpoints. */}
+        <button
+          onClick={() => setOpen(true)}
+          aria-label="Open menu"
+          className="grid size-9 place-items-center rounded-xl border border-white/10 bg-white/[0.04] text-ink-300 transition hover:text-ink-100 md:hidden"
+        >
+          <Menu className="size-[17px]" aria-hidden />
+        </button>
       </nav>
 
       {/* ---- Mobile sheet ---------------------------------------------------- */}
@@ -152,14 +144,6 @@ export function LandingNav() {
                   </li>
                 ))}
               </ul>
-
-              <Link
-                to="/dashboard"
-                className="mt-3 flex items-center justify-center gap-2 rounded-xl border border-brand-400/40 bg-gradient-to-b from-brand-500 to-brand-600 px-4 py-2.5 text-sm font-medium text-white"
-              >
-                Launch Dashboard
-                <ArrowRight className="size-4" aria-hidden />
-              </Link>
             </motion.div>
           </>
         )}
