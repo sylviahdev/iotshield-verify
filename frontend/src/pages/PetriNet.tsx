@@ -44,7 +44,6 @@ import {
 import { useAppState } from '@/context/AppState'
 import {
   ARCS,
-  CANVAS,
   COLOUR_ORDER,
   COLOURS,
   PLACES,
