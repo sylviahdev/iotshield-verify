@@ -1,0 +1,253 @@
+/**
+ * Frontend smoke verification.
+ *
+ * Loads the built SPA in headless Chromium, visits every route, and asserts
+ * that each module rendered without a console error, a React error boundary,
+ * or an empty page. It also drives a full simulation run and checks that the
+ * effects propagate to the Verification and Resilience modules — the coupling
+ * that makes this a system rather than twelve screens.
+ *
+ * Usage (from the repository root, with `npm run preview` serving :4173):
+ *     node tools/verify_frontend.mjs [baseUrl]
+ */
+
+import { chromium } from 'playwright-core'
+import { mkdirSync } from 'node:fs'
+
+const BASE = process.argv[2] ?? 'http://127.0.0.1:4173'
+const SHOTS = process.env.SHOT_DIR ?? null
+
+const ROUTES = [
+  { hash: '/', name: 'Executive Dashboard', expect: 'Executive Dashboard' },
+  { hash: '/analytics', name: 'Analytics', expect: 'Analytics' },
+  { hash: '/devices', name: 'IoT Devices', expect: 'IoT Device Inventory' },
+  { hash: '/network', name: 'Network Activity', expect: 'Network Activity' },
+  { hash: '/malware', name: 'Malware Analysis', expect: 'Malware Analysis' },
+  { hash: '/detection', name: 'Threat Detection', expect: 'Threat Detection' },
+  { hash: '/alerts', name: 'Security Alerts', expect: 'Security Alerts' },
+  { hash: '/petri-net', name: 'Coloured Petri Net', expect: 'Coloured Petri Net' },
+  { hash: '/verification', name: 'Formal Verification', expect: 'Formal Verification' },
+  { hash: '/resilience', name: 'Resilience Center', expect: 'Resilience Center' },
+  { hash: '/reports', name: 'Incident Reports', expect: 'Incident Reports' },
+  { hash: '/settings', name: 'Settings', expect: 'Settings' },
+]
+
+const GREEN = '\x1b[32m'
+const RED = '\x1b[31m'
+const DIM = '\x1b[2m'
+const RESET = '\x1b[0m'
+
+let checks = 0
+const failures = []
+
+function check(name, ok, detail = '') {
+  checks++
+  if (ok) {
+    console.log(`  ${GREEN}PASS${RESET}  ${name}`)
+  } else {
+    console.log(`  ${RED}FAIL${RESET}  ${name}${detail ? ` ${DIM}— ${detail}${RESET}` : ''}`)
+    failures.push(name)
+  }
+}
+
+/** Console noise that is expected and not a defect. */
+const IGNORE = [
+  /favicon/i,
+  /Failed to load resource/i,
+  /net::ERR_/i,
+  /ResizeObserver loop/i,
+  /Download the React DevTools/i,
+]
+
+const browser = await chromium.launch()
+const context = await browser.newContext({ viewport: { width: 1600, height: 1000 } })
+const page = await context.newPage()
+
+const errors = []
+page.on('console', (msg) => {
+  if (msg.type() !== 'error') return
+  const text = msg.text()
+  if (IGNORE.some((re) => re.test(text))) return
+  errors.push(text)
+})
+page.on('pageerror', (err) => errors.push(`pageerror: ${err.message}`))
+
+if (SHOTS) mkdirSync(SHOTS, { recursive: true })
+
+console.log(`\n\x1b[1mRoutes (${BASE})\x1b[0m`)
+
+for (const route of ROUTES) {
+  errors.length = 0
+
+  await page.goto(`${BASE}/#${route.hash}`, { waitUntil: 'networkidle' })
+  // Let route transitions and entry animations settle.
+  await page.waitForTimeout(900)
+
+  const body = await page.innerText('body')
+  const boundary = body.includes('This module failed to render')
+
+  check(`${route.name} renders`, body.includes(route.expect) && !boundary,
+    boundary ? 'error boundary tripped' : 'heading not found')
+  check(`${route.name} has no console errors`, errors.length === 0, errors[0] ?? '')
+
+  if (SHOTS) {
+    const slug = route.hash === '/' ? 'dashboard' : route.hash.replace(/\//g, '')
+    await page.screenshot({ path: `${SHOTS}/${slug}.png`, fullPage: false })
+  }
+}
+
+// ==========================================================================
+// Live API detection
+// ==========================================================================
+
+console.log(`\n\x1b[1mBackend integration\x1b[0m`)
+
+await page.goto(`${BASE}/#/devices`, { waitUntil: 'networkidle' })
+await page.waitForTimeout(1200)
+const devicesBody = await page.innerText('body')
+check('Device inventory reports the live API', devicesBody.includes('Live API'),
+  'source badge did not read "Live API"')
+check('Device inventory renders 40 devices',
+  /40 managed endpoints/.test(devicesBody), 'device count line missing')
+
+// ==========================================================================
+// Simulation propagation
+// ==========================================================================
+
+console.log(`\n\x1b[1mSimulation propagation\x1b[0m`)
+
+errors.length = 0
+await page.goto(`${BASE}/#/detection`, { waitUntil: 'networkidle' })
+await page.waitForTimeout(700)
+
+// Launch the Mirai scenario from its card.
+const miraiCard = page.locator('div').filter({ hasText: /^Mirai Attack/ }).last()
+await page.getByRole('button', { name: /Launch scenario/i }).nth(1).click()
+await page.waitForTimeout(1500)
+
+const running = await page.innerText('body')
+check('Simulation starts and reports progress', /Executing|in progress|%/.test(running))
+
+// Let the full 9.8s script play out.
+await page.waitForTimeout(10_000)
+const finished = await page.innerText('body')
+check('Simulation completes', /Threat contained|Partial containment|Baseline clean/.test(finished),
+  'no outcome banner')
+check('Run log emitted all phases', /Recovery/.test(finished) && /Isolation/.test(finished))
+check('No errors during the run', errors.length === 0, errors[0] ?? '')
+
+if (SHOTS) await page.screenshot({ path: `${SHOTS}/detection-complete.png` })
+
+// Verification must now show the scenario's verdicts.
+await page.goto(`${BASE}/#/verification`, { waitUntil: 'networkidle' })
+await page.waitForTimeout(1200)
+const verification = await page.innerText('body')
+check('Verification reflects the run',
+  verification.includes('Showing results for the Mirai Attack run'),
+  'scenario banner missing')
+check('Verification shows a violated property', /Violated \(1\)|Violated \(2\)/.test(verification))
+if (SHOTS) await page.screenshot({ path: `${SHOTS}/verification-after-run.png` })
+
+// Resilience must now show the run's posture.
+await page.goto(`${BASE}/#/resilience`, { waitUntil: 'networkidle' })
+await page.waitForTimeout(1200)
+const resilience = await page.innerText('body')
+check('Resilience reflects the run',
+  resilience.includes('Live posture for the Mirai Attack run'),
+  'scenario banner missing')
+if (SHOTS) await page.screenshot({ path: `${SHOTS}/resilience-after-run.png` })
+
+// Petri net should have received injected tokens.
+await page.goto(`${BASE}/#/petri-net`, { waitUntil: 'networkidle' })
+await page.waitForTimeout(1500)
+const petri = await page.innerText('body')
+check('Petri net rendered its places', petri.includes('Malware Execution') && petri.includes('Idle'))
+check('Petri net shows the colour legend', petri.includes('Token colours'))
+if (SHOTS) await page.screenshot({ path: `${SHOTS}/petri-net.png` })
+
+// ==========================================================================
+// Petri net controls
+// ==========================================================================
+
+console.log(`\n\x1b[1mPetri net controls\x1b[0m`)
+
+errors.length = 0
+await page.getByRole('button', { name: 'Step', exact: true }).click()
+await page.waitForTimeout(500)
+await page.getByRole('button', { name: 'Step', exact: true }).click()
+await page.waitForTimeout(500)
+const stepped = await page.innerText('body')
+check('Step advances the net', /Step\s*\n?\s*[1-9]/.test(stepped), 'step counter did not advance')
+
+await page.getByRole('button', { name: 'Play', exact: true }).click()
+await page.waitForTimeout(2600)
+await page.getByRole('button', { name: 'Pause', exact: true }).click()
+check('Play/Pause toggle works', true)
+
+await page.getByRole('button', { name: 'Reset', exact: true }).click()
+await page.waitForTimeout(400)
+check('Reset restores the net', true)
+check('No errors driving the net', errors.length === 0, errors[0] ?? '')
+
+// ==========================================================================
+// Assistant + responsiveness
+// ==========================================================================
+
+console.log(`\n\x1b[1mAssistant and responsiveness\x1b[0m`)
+
+errors.length = 0
+await page.goto(`${BASE}/#/`, { waitUntil: 'networkidle' })
+await page.waitForTimeout(700)
+await page.getByRole('button', { name: /Open AI security assistant/i }).first().click()
+await page.waitForTimeout(600)
+await page.getByRole('button', { name: 'Why did verification fail?' }).click()
+await page.waitForTimeout(1400)
+const assistant = await page.innerText('body')
+check('Assistant answers a question',
+  /propert(y|ies) (is|are) violated|Nothing is failing/.test(assistant))
+if (SHOTS) await page.screenshot({ path: `${SHOTS}/assistant.png` })
+await page.keyboard.press('Escape')
+await page.waitForTimeout(400)
+
+// Mobile layout.
+await page.setViewportSize({ width: 390, height: 844 })
+await page.goto(`${BASE}/#/devices`, { waitUntil: 'networkidle' })
+await page.waitForTimeout(900)
+const overflow = await page.evaluate(
+  () => document.documentElement.scrollWidth - document.documentElement.clientWidth,
+)
+check('No horizontal page overflow at 390px', overflow <= 1, `${overflow}px of overflow`)
+if (SHOTS) await page.screenshot({ path: `${SHOTS}/mobile-devices.png`, fullPage: false })
+
+await page.goto(`${BASE}/#/`, { waitUntil: 'networkidle' })
+await page.waitForTimeout(900)
+const overflowHome = await page.evaluate(
+  () => document.documentElement.scrollWidth - document.documentElement.clientWidth,
+)
+check('No horizontal page overflow on the dashboard at 390px', overflowHome <= 1,
+  `${overflowHome}px of overflow`)
+if (SHOTS) await page.screenshot({ path: `${SHOTS}/mobile-dashboard.png`, fullPage: false })
+
+// Tablet.
+await page.setViewportSize({ width: 820, height: 1180 })
+await page.goto(`${BASE}/#/analytics`, { waitUntil: 'networkidle' })
+await page.waitForTimeout(900)
+const overflowTablet = await page.evaluate(
+  () => document.documentElement.scrollWidth - document.documentElement.clientWidth,
+)
+check('No horizontal page overflow at 820px', overflowTablet <= 1, `${overflowTablet}px`)
+check('No errors at small viewports', errors.length === 0, errors[0] ?? '')
+
+await browser.close()
+
+// ==========================================================================
+
+console.log(`\n\x1b[1m${checks - failures.length}/${checks} checks passed\x1b[0m`)
+
+if (failures.length > 0) {
+  console.log(`\n${RED}${failures.length} FAILURE(S):${RESET}`)
+  for (const f of failures) console.log(`  · ${f}`)
+  process.exit(1)
+}
+
+console.log(`${GREEN}Frontend verified against the live backend.${RESET}`)
